@@ -3,40 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VoiceMod: PURE FEMALE</title>
+    <title>VoiceMod: STABLE</title>
     <style>
-        body { background: #000; color: #ff0055; font-family: sans-serif; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        body { background: #000; color: #fff; font-family: sans-serif; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
         #recordBtn {
-            width: 250px; height: 250px; border-radius: 50%;
-            border: 6px solid #ff0055; background: #220011;
-            color: #ff0055; font-size: 24px; font-weight: 900; cursor: pointer;
-            box-shadow: 0 0 50px #ff0055; -webkit-tap-highlight-color: transparent;
-            transition: transform 0.1s;
+            width: 240px; height: 240px; border-radius: 50%;
+            border: 8px solid #fff; background: #333;
+            color: #fff; font-size: 22px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 0 0px #fff; -webkit-tap-highlight-color: transparent;
+            transition: all 0.2s;
         }
-        #recordBtn:active { background: #ff0055; color: #fff; transform: scale(0.95); }
-        .status { margin-top: 40px; font-size: 20px; color: #fff; font-weight: bold; }
-        .subtext { margin-top: 10px; color: #888; font-size: 14px; }
+        #recordBtn:active { background: #fff; color: #000; transform: scale(0.95); }
+        .status { margin-top: 30px; font-size: 20px; font-weight: bold; }
+        .hint { margin-top: 10px; color: #666; font-size: 14px; max-width: 80%; }
     </style>
 </head>
 <body>
-    <button id="recordBtn" ontouchstart="startRecording()" ontouchend="stopRecording()" onmousedown="startRecording()" onmouseup="stopRecording()">HOLD TO TALK</button>
-    <div class="status" id="status">SYSTEM READY</div>
-    <div class="subtext">Mode: Young Female (Zero Similarity)</div>
+    <button id="recordBtn" ontouchstart="startRecording()" ontouchend="stopRecording()" onmousedown="startRecording()" onmouseup="stopRecording()">HOLD & SPEAK</button>
+    <div class="status" id="status">READY</div>
+    <div class="hint">Voice is now LOCKED. It will not change pitch even if you whisper.</div>
 
     <script>
         // ---------------- CONFIGURATION ---------------- //
         const XI_API_KEY = "sk_1698b914f43f7a58dccd76cbf925162bd65d933f9ef08ff8";
         
-        // VOICE: "Mimi" (Young Female Childish Voice - Best for '22yo' vibe on Free Tier)
-        const VOICE_ID = "zrHiDhphv9ZnVXBqCLjz"; 
+        // VOICE: "Nicole" (Standard Female)
+        const VOICE_ID = "piTKgcLEGmPE4e6mEKli"; 
         // ----------------------------------------------- //
 
         let mediaRecorder;
         let audioChunks = [];
 
         async function startRecording() {
-            document.getElementById('status').innerText = "👂 LISTENING...";
-            document.getElementById('recordBtn').style.background = "#550022";
+            document.getElementById('status').innerText = "LISTENING...";
+            document.getElementById('recordBtn').style.borderColor = "#00ff00"; // Green when recording
             
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             mediaRecorder = new MediaRecorder(stream);
@@ -45,18 +45,18 @@
             mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
             
             mediaRecorder.onstop = async () => {
-                document.getElementById('status').innerText = "⚡ CONVERTING...";
+                document.getElementById('status').innerText = "PROCESSING...";
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                 
                 const formData = new FormData();
                 formData.append("audio", audioBlob, "recording.webm");
                 formData.append("model_id", "eleven_multilingual_sts_v2");
                 
-                // 🛑 THE SECRET SAUCE FOR FEMALE VOICE 🛑
+                // 🔒 LOCKED SETTINGS FOR CONSISTENCY
                 formData.append("voice_settings", JSON.stringify({
-                    "stability": 0.5,        // Balanced to keep voice clear
-                    "similarity_boost": 0.0, // ZERO: Ignores your male pitch completely
-                    "style": 1.0,            // MAX: Forces the 'Girl' personality
+                    "stability": 0.8,        // 80% Stable (Stops weird noises)
+                    "similarity_boost": 0.3, // 30% Similar (Ignores your speed/pitch)
+                    "style": 0.0,            // 0% Style (Stops hallucinations)
                     "use_speaker_boost": true
                 }));
 
@@ -68,19 +68,17 @@
                     });
 
                     if (!response.ok) {
-                        const err = await response.text();
-                        console.error(err);
-                        throw new Error("Quota Exceeded or Key Blocked");
+                        throw new Error("API Error");
                     }
 
-                    document.getElementById('status').innerText = "🗣️ SPEAKING...";
+                    document.getElementById('status').innerText = "PLAYING...";
                     const blob = await response.blob();
                     const audio = new Audio(URL.createObjectURL(blob));
                     audio.play();
                     
                     audio.onended = () => {
-                        document.getElementById('status').innerText = "SYSTEM READY";
-                        document.getElementById('recordBtn').style.background = "#220011";
+                        document.getElementById('status').innerText = "READY";
+                        document.getElementById('recordBtn').style.borderColor = "#fff";
                     };
                 } catch (e) {
                     alert("Error: " + e.message);
