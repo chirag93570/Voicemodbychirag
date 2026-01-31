@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Punjabi Voice Changer</title>
+    <style>
+        body { background: #111; color: #0f0; font-family: monospace; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        #recordBtn {
+            width: 200px; height: 200px; border-radius: 50%;
+            border: 4px solid #0f0; background: #000; color: #0f0;
+            font-size: 24px; cursor: pointer; user-select: none;
+            box-shadow: 0 0 20px #0f0; transition: all 0.2s;
+        }
+        #recordBtn:active { background: #0f0; color: #000; transform: scale(0.95); }
+        .status { margin-top: 20px; font-size: 18px; }
+    </style>
+</head>
+<body>
+    <button id="recordBtn" onmousedown="startRecording()" onmouseup="stopRecording()" ontouchstart="startRecording()" ontouchend="stopRecording()">HOLD TO SPEAK</button>
+    <div class="status" id="status">System Ready</div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+
+        async function startRecording() {
+            document.getElementById('status').innerText = "Recording...";
+            document.getElementById('recordBtn').style.background = "#300";
+            document.getElementById('recordBtn').style.borderColor = "red";
+            
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+            
+            mediaRecorder.onstop = async () => {
+                document.getElementById('status').innerText = "Processing (Wait 2s)...";
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                const formData = new FormData();
+                formData.append("audio", audioBlob, "recording.webm");
+
+                // Send to YOUR Python backend (not ElevenLabs directly)
+                try {
+                    const response = await fetch('/process_audio', { method: "POST", body: formData });
+                    
+                    if (!response.ok) throw new Error("Server Error");
+
+                    const blob = await response.blob();
+                    const audio = new Audio(URL.createObjectURL(blob));
+                    audio.play();
+                    document.getElementById('status').innerText = "Playing Output...";
+                } catch (e) {
+                    alert("Error: " + e.message);
+                    document.getElementById('status').innerText = "Error.";
+                }
+                
+                // Reset UI
+                document.getElementById('recordBtn').style.background = "#000";
+                document.getElementById('recordBtn').style.borderColor = "#0f0";
+            };
+
+            mediaRecorder.start();
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== "inactive") {
+                mediaRecorder.stop();
+            }
+        }
+    </script>
+</body>
+</html>
