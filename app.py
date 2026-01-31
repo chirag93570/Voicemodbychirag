@@ -27,7 +27,7 @@ def process_audio():
     
     # ⚡ OPTIMIZATION: Use 'eleven_turbo_v2' for lowest latency (It is faster than multilingual)
     # If you need Hindi accent, switch back to 'eleven_multilingual_v2'
-    model_id = "eleven_multilingual_v2" 
+    model_id = "eleven_multilingual_sts_v2" 
 
     url = f"https://api.elevenlabs.io/v1/speech-to-speech/{VOICE_ID}/stream"
     
