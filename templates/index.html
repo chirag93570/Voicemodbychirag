@@ -3,41 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Punjabi Voice (Force Girl Pitch)</title>
+    <title>VoiceMod: PURE FEMALE</title>
     <style>
-        body { background: #050505; color: #ff00ff; font-family: monospace; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        body { background: #000; color: #ff0055; font-family: sans-serif; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
         #recordBtn {
-            width: 220px; height: 220px; border-radius: 50%;
-            border: 4px solid #ff00ff; background: rgba(255, 0, 255, 0.1);
-            color: #ff00ff; font-size: 20px; font-weight: bold; cursor: pointer;
-            box-shadow: 0 0 30px #ff00ff; -webkit-tap-highlight-color: transparent;
-            transition: all 0.2s;
+            width: 250px; height: 250px; border-radius: 50%;
+            border: 6px solid #ff0055; background: #220011;
+            color: #ff0055; font-size: 24px; font-weight: 900; cursor: pointer;
+            box-shadow: 0 0 50px #ff0055; -webkit-tap-highlight-color: transparent;
+            transition: transform 0.1s;
         }
-        #recordBtn:active { background: #ff00ff; color: #000; transform: scale(0.95); }
-        .status { margin-top: 30px; font-size: 16px; color: #fff; text-shadow: 0 0 10px #ff00ff; }
-        .hint { margin-top: 10px; font-size: 12px; color: #888; }
+        #recordBtn:active { background: #ff0055; color: #fff; transform: scale(0.95); }
+        .status { margin-top: 40px; font-size: 20px; color: #fff; font-weight: bold; }
+        .subtext { margin-top: 10px; color: #888; font-size: 14px; }
     </style>
 </head>
 <body>
-    <button id="recordBtn" ontouchstart="startRecording()" ontouchend="stopRecording()" onmousedown="startRecording()" onmouseup="stopRecording()">HOLD TO SPEAK</button>
-    <div class="status" id="status">System Ready (Girl Mode)</div>
-    <div class="hint">Speak softly for best results</div>
+    <button id="recordBtn" ontouchstart="startRecording()" ontouchend="stopRecording()" onmousedown="startRecording()" onmouseup="stopRecording()">HOLD TO TALK</button>
+    <div class="status" id="status">SYSTEM READY</div>
+    <div class="subtext">Mode: Young Female (Zero Similarity)</div>
 
     <script>
         // ---------------- CONFIGURATION ---------------- //
         const XI_API_KEY = "sk_1698b914f43f7a58dccd76cbf925162bd65d933f9ef08ff8";
         
-        // CHANGED VOICE TO: 'Sarah' (Sharper/High Pitch Standard Voice)
-        const VOICE_ID = "EXAVITQu4vr4xnSDxMaL"; 
+        // VOICE: "Mimi" (Young Female Childish Voice - Best for '22yo' vibe on Free Tier)
+        const VOICE_ID = "zrHiDhphv9ZnVXBqCLjz"; 
         // ----------------------------------------------- //
 
         let mediaRecorder;
         let audioChunks = [];
 
         async function startRecording() {
-            document.getElementById('status').innerText = "🎤 Listening...";
-            document.getElementById('recordBtn').style.borderColor = "white";
-            document.getElementById('recordBtn').style.boxShadow = "0 0 30px white";
+            document.getElementById('status').innerText = "👂 LISTENING...";
+            document.getElementById('recordBtn').style.background = "#550022";
             
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             mediaRecorder = new MediaRecorder(stream);
@@ -46,18 +45,18 @@
             mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
             
             mediaRecorder.onstop = async () => {
-                document.getElementById('status').innerText = "⚡ AI Converting...";
+                document.getElementById('status').innerText = "⚡ CONVERTING...";
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                 
                 const formData = new FormData();
                 formData.append("audio", audioBlob, "recording.webm");
                 formData.append("model_id", "eleven_multilingual_sts_v2");
                 
-                // ⚠️ MAGIC SETTINGS FOR GIRL VOICE ⚠️
+                // 🛑 THE SECRET SAUCE FOR FEMALE VOICE 🛑
                 formData.append("voice_settings", JSON.stringify({
-                    "stability": 0.4,       // Allows accent to flex
-                    "similarity_boost": 0.3, // LOW = Ignores your male pitch
-                    "style": 0.0,
+                    "stability": 0.5,        // Balanced to keep voice clear
+                    "similarity_boost": 0.0, // ZERO: Ignores your male pitch completely
+                    "style": 1.0,            // MAX: Forces the 'Girl' personality
                     "use_speaker_boost": true
                 }));
 
@@ -70,22 +69,22 @@
 
                     if (!response.ok) {
                         const err = await response.text();
-                        throw new Error(err);
+                        console.error(err);
+                        throw new Error("Quota Exceeded or Key Blocked");
                     }
 
-                    document.getElementById('status').innerText = "🔊 Speaking...";
+                    document.getElementById('status').innerText = "🗣️ SPEAKING...";
                     const blob = await response.blob();
                     const audio = new Audio(URL.createObjectURL(blob));
                     audio.play();
                     
                     audio.onended = () => {
-                        document.getElementById('status').innerText = "System Ready";
-                        document.getElementById('recordBtn').style.borderColor = "#ff00ff";
-                        document.getElementById('recordBtn').style.boxShadow = "0 0 30px #ff00ff";
+                        document.getElementById('status').innerText = "SYSTEM READY";
+                        document.getElementById('recordBtn').style.background = "#220011";
                     };
                 } catch (e) {
                     alert("Error: " + e.message);
-                    document.getElementById('status').innerText = "Error (Check Quota)";
+                    document.getElementById('status').innerText = "ERROR";
                 }
             };
 
