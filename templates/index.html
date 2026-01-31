@@ -3,40 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VoiceMod: STABLE</title>
+    <title>Indian Girl Pitch Shifter</title>
     <style>
-        body { background: #000; color: #fff; font-family: sans-serif; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        body { background: #1a000d; color: #ff3399; font-family: sans-serif; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        
         #recordBtn {
-            width: 240px; height: 240px; border-radius: 50%;
-            border: 8px solid #fff; background: #333;
-            color: #fff; font-size: 22px; font-weight: bold; cursor: pointer;
-            box-shadow: 0 0 0px #fff; -webkit-tap-highlight-color: transparent;
-            transition: all 0.2s;
+            width: 220px; height: 220px; border-radius: 50%;
+            border: 6px solid #ff3399; background: #33001a;
+            color: #ff3399; font-size: 24px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 0 40px #ff3399; user-select: none;
+            transition: transform 0.1s;
+            -webkit-tap-highlight-color: transparent;
         }
-        #recordBtn:active { background: #fff; color: #000; transform: scale(0.95); }
-        .status { margin-top: 30px; font-size: 20px; font-weight: bold; }
-        .hint { margin-top: 10px; color: #666; font-size: 14px; max-width: 80%; }
+        
+        #recordBtn:active { background: #ff3399; color: #fff; transform: scale(0.95); }
+        
+        .controls { margin-top: 30px; width: 80%; max-width: 300px; }
+        label { display: block; margin-bottom: 10px; color: #fff; }
+        input[type=range] { width: 100%; accent-color: #ff3399; }
+        
+        .status { margin-top: 20px; font-size: 18px; color: #fff; }
     </style>
 </head>
 <body>
-    <button id="recordBtn" ontouchstart="startRecording()" ontouchend="stopRecording()" onmousedown="startRecording()" onmouseup="stopRecording()">HOLD & SPEAK</button>
-    <div class="status" id="status">READY</div>
-    <div class="hint">Voice is now LOCKED. It will not change pitch even if you whisper.</div>
+
+    <button id="recordBtn" onmousedown="startRec()" onmouseup="stopRec()" ontouchstart="startRec()" ontouchend="stopRec()">HOLD TO SPEAK</button>
+    
+    <div class="status" id="status">Ready</div>
+
+    <div class="controls">
+        <label>Pitch (Femaleness): <span id="pitchVal">1.25</span>x</label>
+        <input type="range" id="pitchSlider" min="1.0" max="1.5" step="0.05" value="1.25" oninput="updatePitch()">
+    </div>
 
     <script>
-        // ---------------- CONFIGURATION ---------------- //
-        const XI_API_KEY = "sk_1698b914f43f7a58dccd76cbf925162bd65d933f9ef08ff8";
-        
-        // VOICE: "Nicole" (Standard Female)
-        const VOICE_ID = "piTKgcLEGmPE4e6mEKli"; 
-        // ----------------------------------------------- //
-
+        let audioCtx;
         let mediaRecorder;
         let audioChunks = [];
+        let audioBlob;
 
-        async function startRecording() {
-            document.getElementById('status').innerText = "LISTENING...";
-            document.getElementById('recordBtn').style.borderColor = "#00ff00"; // Green when recording
+        // 1. Initialize Audio Context (The Engine)
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        async function startRec() {
+            initAudio();
+            document.getElementById('status').innerText = "Recording...";
+            document.getElementById('recordBtn').style.background = "#ff0055";
             
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             mediaRecorder = new MediaRecorder(stream);
@@ -45,54 +64,64 @@
             mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
             
             mediaRecorder.onstop = async () => {
-                document.getElementById('status').innerText = "PROCESSING...";
-                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                
-                const formData = new FormData();
-                formData.append("audio", audioBlob, "recording.webm");
-                formData.append("model_id", "eleven_multilingual_sts_v2");
-                
-                // 🔒 LOCKED SETTINGS FOR CONSISTENCY
-                formData.append("voice_settings", JSON.stringify({
-                    "stability": 0.8,        // 80% Stable (Stops weird noises)
-                    "similarity_boost": 0.3, // 30% Similar (Ignores your speed/pitch)
-                    "style": 0.0,            // 0% Style (Stops hallucinations)
-                    "use_speaker_boost": true
-                }));
-
-                try {
-                    const response = await fetch(`https://api.elevenlabs.io/v1/speech-to-speech/${VOICE_ID}/stream`, {
-                        method: "POST",
-                        headers: { "xi-api-key": XI_API_KEY },
-                        body: formData
-                    });
-
-                    if (!response.ok) {
-                        throw new Error("API Error");
-                    }
-
-                    document.getElementById('status').innerText = "PLAYING...";
-                    const blob = await response.blob();
-                    const audio = new Audio(URL.createObjectURL(blob));
-                    audio.play();
-                    
-                    audio.onended = () => {
-                        document.getElementById('status').innerText = "READY";
-                        document.getElementById('recordBtn').style.borderColor = "#fff";
-                    };
-                } catch (e) {
-                    alert("Error: " + e.message);
-                    document.getElementById('status').innerText = "ERROR";
-                }
+                document.getElementById('status').innerText = "Processing...";
+                audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                processAndPlay(); // The Magic Happens Here
             };
 
             mediaRecorder.start();
         }
 
-        function stopRecording() {
+        function stopRec() {
             if (mediaRecorder && mediaRecorder.state !== "inactive") {
                 mediaRecorder.stop();
             }
+            document.getElementById('recordBtn').style.background = "#33001a";
+        }
+
+        function updatePitch() {
+            document.getElementById('pitchVal').innerText = document.getElementById('pitchSlider').value;
+        }
+
+        // 2. The Physics: Turn Man into Woman
+        async function processAndPlay() {
+            const arrayBuffer = await audioBlob.arrayBuffer();
+            const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+            // Create Source
+            const source = audioCtx.createBufferSource();
+            source.buffer = audioBuffer;
+
+            // --- FILTER 1: CUT THE MALE BASS ---
+            const highPass = audioCtx.createBiquadFilter();
+            highPass.type = "highpass";
+            highPass.frequency.value = 220; // Cut everything below 220Hz (Male chest sound)
+            highPass.Q.value = 0.7;
+
+            // --- FILTER 2: BOOST THE FEMALE CLARITY ---
+            const highshelf = audioCtx.createBiquadFilter();
+            highshelf.type = "highshelf";
+            highshelf.frequency.value = 3000;
+            highshelf.gain.value = 5; // Add "sharpness" typical of Indian female voices
+
+            // --- PITCH SHIFTING ---
+            // 1.25 is the Sweet Spot. 
+            // 1.0 = Normal
+            // 1.5 = Chipmunk
+            const pitchValue = parseFloat(document.getElementById('pitchSlider').value);
+            source.playbackRate.value = pitchValue; 
+
+            // Connect the chain: Source -> HighPass -> HighShelf -> Speakers
+            source.connect(highPass);
+            highPass.connect(highshelf);
+            highshelf.connect(audioCtx.destination);
+
+            source.start();
+            document.getElementById('status').innerText = "Playing (Offline)";
+            
+            source.onended = () => {
+                document.getElementById('status').innerText = "Ready";
+            };
         }
     </script>
 </body>
